@@ -1,11 +1,11 @@
 import { useState } from "react"
 import { Task } from "../Task/Task";
+import { Form } from "../Form/Form";
+import { Title } from "../Title/Title";
+import { ListTasks } from "../ListTasks/ListTasks";
 
 export const ToDo = () => {
     const [tasks, setTasks] = useState([]);
-    const [form, setForm] = useState({
-        title: ""
-    });
 
     //Luego de la "=>" va los "()" para evitar poner el return de la función.
     const createTask = (title) => ({
@@ -14,52 +14,44 @@ export const ToDo = () => {
         completed: false
     });
 
-    const resetForm = () => {
-        setForm({
-            title: "",
-        });
-    }
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-
-        setForm({
-            ...form,
-            [name]: value
-        })
-    }
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
+    const addTask = (form) => {
         const newTask = createTask(form.title);
 
         setTasks([...tasks, newTask]);
+    }
 
-        resetForm();
+    const completeTask = (id) => {
+        //Se evita la mutación de los elementos originales al hacer una copia profunda de los mismos
+        const draft = structuredClone(tasks);
+        const task = draft.find((task) => task.id === id);
+        task.completed = !task.completed;
+        setTasks(draft);
+    }
+
+    const deleteTask = (id) => {
+        const newTask = tasks.filter((task) => task.id != id);
+        setTasks(newTask);
     }
 
     return (
         <>
-            <section>
-                <h1>TODO-LIST</h1>
-            </section>
+            <Title><h1>TODO-LIST</h1></Title>
 
-            <section>
-                <form action="" onSubmit={handleSubmit}>
-                    <input name="title" type="text" value={form.title} onChange={handleChange} />
-                    <button type="submit">Agregar Tarea</button>
-                </form>
-            </section>
+            {/* Si recibe el mismo parametro y se envia el mismo, se puede omitir*/}
+            {/* Esta forma de trabajar es util para lidiar con el tema de las dependencias */}
+            {/* <Form onSubmitted={(form)=>{addTask(form)}}></Form> */}
+            <Form onSubmitted={addTask}></Form>
 
-            <section>
-                {tasks.map((task) => {
-                    return (
-                        <Task key={task.id} title={task.title} completed={task.completed}></Task>
+            <ListTasks
+                tasks={tasks} 
+                renderTask={(task) => {
+                    return(
+                        <Task key={task.id} title={task.title} completed={task.completed} onCompleted={() => { completeTask(task.id) }} onDeleted={() => { deleteTask(task.id) }}></Task>
                     )
-                })}
+                }}
+            >
 
-            </section>
+            </ListTasks>
         </>
     )
 }
